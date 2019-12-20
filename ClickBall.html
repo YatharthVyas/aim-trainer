@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Click Speed Game</title>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+	<style type="text/css">
+		
+		#score{
+			position: relative;
+			transform: translateX(400);
+		}
+		.flex-container{
+			display: flex;
+			vertical-align: center;
+		}
+		body{
+			background-color: lightgray;
+			font-family: "Comic Sans MS", cursive, sans-serif;
+		}
+		#title{
+			background-color: gray;
+			text-align: center;
+			font-family: "Lucida Console", Monaco, monospace;
+		}
+		.footer{
+			color: white;
+			background: black;
+			text-align: center;
+		}
+	</style>
+</head>
+<body>
+	<div class="flex-container">
+		<h1 id="score" style="flex-grow: 1"> Score = 0 </h1>
+		<h1 style="flex-grow: 4" id="title">Click The Ball!</h1>
+		<div style="flex-grow: 3" class="flex-container"> <h1>Difficulty:</h1>	
+			<button style="flex-grow: 1" class="btn btn-primary" onclick="easyMode()"> Easy </button>
+			<button style="flex-grow: 1" class="btn btn-success" onclick="mediumMode()"> Medium </button>
+			<button style="flex-grow: 1" class="btn btn-danger" onclick="hardMode()"> Hard </button>
+		</div>
+	</div>
+	<canvas id="gameCanvas" width="1535" height="605"></canvas>
+	<div align="center"><button class="btn-small btn-danger" onclick="reset()">Reset Score</button></div>
+	<div class="footer"> Made by Yatharth Vyas </div>
+	<script type="text/javascript">
+		
+		var canvasContext;
+		var canvas;
+		var hasWon = false;
+		winPoints = 30;
+		var points = 0;
+		var yPos = 40;
+		var xPos = 40
+		var yVel = 2;
+		var xVel = 2;
+		var radius = 40;
+		var FramesPerSecond = 60;
+		var Difficulty = "Easy";
+		var date = new Date();
+		var timeStart;
+		var winTime;
+		window.onload = function(){
+			canvas = document.getElementById('gameCanvas');
+			canvasContext = canvas.getContext('2d');
+			canvas.width = document.documentElement.clientWidth;
+			canvas.height = document.documentElement.clientHeight-115;
+			drawCanvas();
+			timeStart=date.getTime();
+			setInterval(function(){
+				drawCanvas();
+				bounceWalls();
+			},1000/FramesPerSecond);
+			canvas.addEventListener('click',function(evt){
+				if (!hasWon){
+					var mousePos = findMousePos(evt);
+					if(mousePos.x>(xPos-radius) && mousePos.x<(xPos+radius) && mousePos.y>(yPos-radius) && mousePos.y<(yPos+radius)){
+						points = points + 1;
+						document.getElementById('score').innerHTML = "Score = "+points;
+						if (points==winPoints){
+							var date2 = new Date();
+							var timeEnd = date2.getTime();
+							winTime = (timeEnd - timeStart)/1000;
+							hasWon = true;
+						}
+					}
+				}
+			})
+		}
+
+		function drawCanvas(){
+			canvasContext.fillStyle = 'orange';
+			canvasContext.fillRect(0,0,canvas.width,canvas.height);
+			canvasContext.fillStyle = 'red';
+			if (!hasWon){
+				canvasContext.beginPath();
+				canvasContext.arc(xPos,yPos,radius,0,2*Math.PI,true);	//(x,y,radius,start_angle,end angle,draw the area mentioned in the angle)
+				canvasContext.fill();
+			}
+			if (hasWon){
+				canvasContext.fillStyle='black';
+				canvasContext.font='30px Arial';
+				canvasContext.fillText("You Won in "+winTime+" seconds",100,100);
+			}
+			else if (points<5){
+				canvasContext.fillStyle='black';
+				canvasContext.font='30px Arial';
+				canvasContext.fillText("Score 30 to win !",600,100);
+			}
+		}
+
+		function findMousePos(evt){
+			var rectBorder = canvas.getBoundingClientRect();		//Accounts for scroll distance and margin outside canvas
+			var mouseX = evt.clientX - rectBorder.left;
+			var mouseY = evt.clientY - rectBorder.top;
+			return{
+				x:mouseX,
+				y:mouseY};
+		}
+
+		function bounceWalls(){
+			if (xPos>canvas.width-radius||xPos<radius){				//20 is subtracted because thats the width of the box
+				xVel = -xVel;
+			}
+			if (yPos>canvas.height-radius||yPos<radius){				//20 is subtracted because thats the height of the box
+				yVel = -yVel;
+			}
+			yPos = yPos + yVel;
+			xPos = xPos + xVel;
+		}
+
+		function easyMode(){				//xVel=yVel=2 and Radius=40
+			if(Difficulty=="Medium"){
+				yVel = yVel/2;
+				xVel = xVel/2;
+				radius = radius*4/3;
+			}
+			else if(Difficulty=="Hard"){
+				yVel = yVel/4;
+				xVel = xVel/4;
+				radius = radius*2;
+			}
+			Difficulty="Easy";
+			reset();
+		}
+
+		function mediumMode(){				//xVel=yVel=4 and Radius=30
+			if(Difficulty=="Easy"){
+				yVel = yVel*2;
+				xVel = xVel*2;
+				radius = radius*3/4;
+			}
+			else if(Difficulty=="Hard"){
+				yVel = yVel/2;
+				xVel = xVel/2;
+				radius = radius*3/2;
+			}
+			Difficulty="Medium";
+			reset();
+		}
+
+		function hardMode(){				//xVel=yVel=8 and Radius=20
+			if(Difficulty=="Easy"){
+				yVel = yVel*4;
+				xVel = xVel*4;
+				radius = radius/2;
+			}
+			else if(Difficulty=="Medium"){
+				yVel = yVel*2;
+				xVel = xVel*2;
+				radius = radius*2/3;
+			}
+			Difficulty="Hard";
+			reset();
+		}
+		function reset(){
+			points = 0;
+			document.getElementById('score').innerHTML = "Score = "+points;
+			date = new Date();
+			timeStart = date.getTime();
+			hasWon = false;
+		}
+
+	</script>
+</body>
+</html>
