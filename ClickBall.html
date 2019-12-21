@@ -3,10 +3,11 @@
 <head>
 	<title>Click Speed Game</title>
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<style type="text/css">
 		
-		#score{
+		.score{
 			position: relative;
 			transform: translateX(400);
 		}
@@ -28,17 +29,48 @@
 			background: black;
 			text-align: center;
 		}
+		.desktop-score{
+			display: none;
+		}
+		.mobile-score{
+			display: none;
+		}
+		
+		@media screen and (min-width: 768px){
+			.score{
+				flex-grow: 1;
+			}
+			.flex-titlePanel{
+				flex-grow: 4;
+			}
+			#difficulty{
+				flex-grow: 3;
+			}
+			.desktop-score{
+				display: block;
+			}
+		}
+
+		@media screen and (max-width: 768px){
+			.flex-container{
+				flex-direction: column;
+			}
+			.mobile-score{
+				display: block;
+			}
+		}
 	</style>
 </head>
 <body>
 	<div class="flex-container">
-		<h1 id="score" style="flex-grow: 1"> Score = 0 </h1>
-		<h1 style="flex-grow: 4" id="title">Click The Ball!</h1>
-		<div style="flex-grow: 3" class="flex-container"> <h1>Difficulty:</h1>	
+		<h1 id="score" class="desktop-score"> Score = 0 </h1>
+		<h1 class="flex-titlePanel" id="title">Click The Ball!</h1>
+		<div class="flex-container difficulty"> <h1>Difficulty:</h1>	
 			<button style="flex-grow: 1" class="btn btn-primary" onclick="easyMode()"> Easy </button>
 			<button style="flex-grow: 1" class="btn btn-success" onclick="mediumMode()"> Medium </button>
 			<button style="flex-grow: 1" class="btn btn-danger" onclick="hardMode()"> Hard </button>
 		</div>
+		<h1 id="score-mobile" class="mobile-score"> Score = 0 </h1>
 	</div>
 	<canvas id="gameCanvas" width="1535" height="605"></canvas>
 	<div align="center"><button class="btn-small btn-danger" onclick="reset()">Reset Score</button></div>
@@ -74,9 +106,10 @@
 			canvas.addEventListener('click',function(evt){
 				if (!hasWon){
 					var mousePos = findMousePos(evt);
-					if(mousePos.x>(xPos-radius) && mousePos.x<(xPos+radius) && mousePos.y>(yPos-radius) && mousePos.y<(yPos+radius)){
+					if((mousePos.x-xPos)*(mousePos.x-xPos) +(mousePos.y-yPos)*(mousePos.y-yPos)<=(radius*radius)+50){	//eqn of circle and adding 50 to reduce difficulty or motion marginal error
 						points = points + 1;
 						document.getElementById('score').innerHTML = "Score = "+points;
+						document.getElementById('score-mobile').innerHTML = "Score = "+points;
 						if (points==winPoints){
 							var date2 = new Date();
 							var timeEnd = date2.getTime();
@@ -87,6 +120,11 @@
 				}
 			})
 		}
+
+		window.addEventListener('resize',function(evt){
+			canvas.width = document.documentElement.clientWidth;
+			canvas.height = document.documentElement.clientHeight-115;
+		})
 
 		function drawCanvas(){
 			canvasContext.fillStyle = 'orange';
@@ -100,12 +138,19 @@
 			if (hasWon){
 				canvasContext.fillStyle='black';
 				canvasContext.font='30px Arial';
-				canvasContext.fillText("You Won in "+winTime+" seconds",100,100);
+				if (canvas.width>768){
+					canvasContext.fillText("You Won in "+winTime+" seconds",100,100);
+				}
+				else{
+					canvasContext.fillText("You Won !!!",50,100);
+					canvasContext.fillText(winTime+" seconds",50,150);
+				}
+
 			}
 			else if (points<5){
 				canvasContext.fillStyle='black';
 				canvasContext.font='30px Arial';
-				canvasContext.fillText("Score 30 to win !",600,100);
+				canvasContext.fillText("Score 30 to win !",canvas.width/2-100,canvas.height/4);
 			}
 		}
 
@@ -141,6 +186,10 @@
 				radius = radius*2;
 			}
 			Difficulty="Easy";
+			if(xPos<radius || xPos>canvas.width-radius || yPos<radius || xPos>canvas.width-radius || yPos>canvas.height-radius){			//Prevents the ball getting stuck on radius change
+				xPos=radius;
+				yPos=radius;
+			}
 			reset();
 		}
 
@@ -156,6 +205,10 @@
 				radius = radius*3/2;
 			}
 			Difficulty="Medium";
+			if(xPos<radius || xPos>canvas.width-radius || yPos<radius || xPos>canvas.width-radius || yPos>canvas.height-radius){
+				xPos=radius;
+				yPos=radius;
+			}
 			reset();
 		}
 
@@ -176,6 +229,7 @@
 		function reset(){
 			points = 0;
 			document.getElementById('score').innerHTML = "Score = "+points;
+			document.getElementById('score-mobile').innerHTML = "Score = "+points;
 			date = new Date();
 			timeStart = date.getTime();
 			hasWon = false;
